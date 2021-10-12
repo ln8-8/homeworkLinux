@@ -13,7 +13,7 @@ public:
   void print() const; //prints the complex number
   ComplexNumber operator +(const ComplexNumber& obj);
   ComplexNumber operator -(const ComplexNumber& obj);
-  ComplexNumber operator *(const double n);//multiply by constant when the constant is the first argument
+  ComplexNumber operator *(const double n);//multiply by constant when the constant is the second argument
   double absoluteValue(); //returns absolute value of complex number
   friend ComplexNumber operator * (const double n, const ComplexNumber& obj);//multiply by constant when the constant is the first argument
 };
