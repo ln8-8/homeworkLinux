@@ -1,8 +1,40 @@
 #include "server.h"
 
 void Server::sendResponse(int clientFd) {
-
+  handleFunctionality->handle(request, response);
+  std::string headInStr;
+  char buffer[1000];
+  ssize_t respStatSize = response.status.size();
+  for(int i = 0; i < respStatSize; i++) {
+    buffer[i] = response.status[i];
+  }
+  buffer[respStatSize] = '\n';
+  for (auto const &pair: request.head) {
+    headInStr+=pair.first;
+    headInStr+=":";
+    headInStr+=" ";
+    headInStr+=pair.second;
+    headInStr+='\n';
+  }
+  for(int j = respStatSize + 1; j < headInStr.size() + respStatSize + 1; j++) {
+    buffer[j] = response.status[j];
+  }
+  buffer[headInStr.size() + respStatSize + 1] = '\n';
+  int bufSize = respStatSize + headInStr.size() + 2 + response.body.size();
+  for(int k = respStatSize + headInStr.size() + 2; k < bufSize; k++){
+    buffer[k] = request.body[k];
+  }
+  ssize_t writedInSocket = write(clientFd, buffer, bufSize);
+  if(writedInSocket < 0) {
+    std::cerr << "Could not write to client socket" << std::endl;
+    exit(errno);
+  }
 }
+
+void Server::getHandlerStruct(Handler *handler) {
+  handleFunctionality = handler;
+}
+
 void Server::constructHead(std::string headStr) {
   std::string headKay;
   std::string headValue;
@@ -105,5 +137,18 @@ void Server::run() {
     sendResponse(clientFd);
     close(clientFd);
   }
+
+}
+void staticSites::handle(fileInfo &request, fileInfo &response) {
+  response.status = "HTTP1.1 200 OK";
+  for (auto const &pair: request.head) {
+    response.head[pair.first] = pair.second;
+  }
+  for(int i = 0; i < request.body.size(); i++){
+    response.body[i] = request.body[i] + 1;
+  }
+}
+
+void dynamicSites::handle(fileInfo &request, fileInfo &response) {
 
 }

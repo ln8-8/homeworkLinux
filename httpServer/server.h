@@ -16,17 +16,34 @@ struct fileInfo {
   std::string body;
 };
 
+
+class Handler {
+ public:
+  virtual void handle (fileInfo &request, fileInfo &response) = 0;
+};
+
+class staticSites : Handler {
+ public:
+  void handle (fileInfo &request, fileInfo &response) override;
+};
+
+class dynamicSites : Handler {
+ public:
+  void handle (fileInfo &request, fileInfo &response) override;
+};
+
 class Server {
   const int port = 9090;
   fileInfo request;
   fileInfo response;
+  Handler *handleFunctionality;
 public:
   Server() = default;
   void run();
+  void getHandlerStruct(Handler* handler);
   void constructHead(std::string headStr);
   void getRequest(int clientFd);
   void sendResponse(int clientFd);
 };
-
 
 #endif //HTTPSERVER_LIBRARY_H
