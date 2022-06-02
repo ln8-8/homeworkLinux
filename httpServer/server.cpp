@@ -1,10 +1,59 @@
 #include "server.h"
 
-void Server::response(int clientFd) {
+void Server::sendResponse(int clientFd) {
 
 }
+void Server::constructHead(std::string headStr) {
+  std::string headKay;
+  std::string headValue;
+  int keyEndInd;
+  for(int keyI = 0; keyI < headStr.size(); keyI++){
+    if(headStr[keyI] != ':'){
+      headKay += headStr[keyI];
+    } else {
+      keyEndInd = keyI;
+      break;
+    }
+  }
+  for(int valueI = keyEndInd + 2; valueI < headStr.size(); valueI++) {
+    headValue += headStr[valueI];
+  }
+  request.head[headKay] = headValue;
+}
 
-void Server::request(int clientFd) {
+void Server::getRequest(int clientFd) {
+  char sentInfo[1000];
+  ssize_t sentInfoSize = recv (clientFd, sentInfo, 1000, 0);
+  if (sentInfoSize < 0) {
+    std::cerr << "Could not read from client socket" << std::endl;
+    exit(errno);
+  }
+  bool statusInd = false;
+  bool headInd = false;
+  std::string headStr;
+  for(int charInd = 0; charInd < sentInfoSize; charInd++){
+    if(!statusInd) {
+      if(sentInfo[charInd] != '\n'){
+        request.status += sentInfo[charInd];
+      } else {
+        statusInd = true;
+      }
+    } else if (!headInd) {
+      if(sentInfo[charInd] != '\n'){
+        headStr += sentInfo[charInd];
+      } else if(sentInfo[charInd+1] != '\n'){
+        constructHead(headStr);
+        headStr.clear();
+      } else {
+        headInd = true;
+        charInd++;
+      }
+    } else {
+      if(sentInfo[charInd] != '\n'){
+        request.body += sentInfo[charInd];
+      }
+    }
+  }
 
 }
 
@@ -52,8 +101,8 @@ void Server::run() {
       continue;
     }
 
-    request(clientFd);
-    response(clientFd);
+    getRequest(clientFd);
+    sendResponse(clientFd);
     close(clientFd);
   }
 
